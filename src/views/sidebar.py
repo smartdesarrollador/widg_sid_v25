@@ -440,13 +440,14 @@ class Sidebar(QWidget):
         # MOVED TO QUICK ACCESS PANEL
         # self.pinned_panels_button.clicked.connect(self.on_pinned_panels_manager_clicked)
         # main_layout.addWidget(self.pinned_panels_button)
+        # self.component_manager_button - MOVED TO QUICK ACCESS PANEL
 
-        # Component manager button
-        self.component_manager_button = QPushButton("🧩")
-        self.component_manager_button.setFixedSize(70, 45)
-        self.component_manager_button.setToolTip("Gestor de Componentes")
-        self.component_manager_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.component_manager_button.setStyleSheet(f"""
+        # Browser button (moved from Quick Access Panel)
+        self.browser_button = QPushButton("🌐")
+        self.browser_button.setFixedSize(70, 45)
+        self.browser_button.setToolTip("Navegador")
+        self.browser_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.browser_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {self.theme.get_color('background_deep')};
                 color: {self.theme.get_color('text_secondary')};
@@ -467,8 +468,8 @@ class Sidebar(QWidget):
                 color: {self.theme.get_color('text_primary')};
             }}
         """)
-        self.component_manager_button.clicked.connect(self.on_component_manager_clicked)
-        main_layout.addWidget(self.component_manager_button)
+        self.browser_button.clicked.connect(self.on_browser_clicked)
+        main_layout.addWidget(self.browser_button)
 
         # Settings button at the bottom
         self.settings_button = QPushButton("⚙")
@@ -762,7 +763,6 @@ class Sidebar(QWidget):
                 self.quick_access_panel.tables_manager_clicked.connect(lambda: self.tables_manager_clicked.emit())
                 self.quick_access_panel.favorites_clicked.connect(lambda: self.favorites_clicked.emit())
                 self.quick_access_panel.dashboard_clicked.connect(lambda: self.dashboard_clicked.emit())
-                self.quick_access_panel.browser_clicked.connect(lambda: self.browser_clicked.emit())
                 self.quick_access_panel.category_filter_clicked.connect(lambda: self.category_filter_clicked.emit())
                 self.quick_access_panel.table_creator_clicked.connect(lambda: self.table_creator_clicked.emit())
                 self.quick_access_panel.create_process_clicked.connect(lambda: self.create_process_clicked.emit())
@@ -770,6 +770,7 @@ class Sidebar(QWidget):
                 self.quick_access_panel.ai_bulk_clicked.connect(lambda: self.ai_bulk_clicked.emit())
                 self.quick_access_panel.ai_table_clicked.connect(lambda: self.ai_table_clicked.emit())
                 self.quick_access_panel.pinned_panels_clicked.connect(lambda: self.pinned_panels_manager_clicked.emit())
+                self.quick_access_panel.component_manager_clicked.connect(lambda: self.component_manager_clicked.emit())
 
         # Toggle visibility
         if self.quick_access_panel.isVisible():

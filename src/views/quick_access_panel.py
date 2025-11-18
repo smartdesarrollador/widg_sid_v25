@@ -35,6 +35,7 @@ class QuickAccessPanel(QWidget):
     ai_table_clicked = pyqtSignal()
     pinned_panels_clicked = pyqtSignal()
     advanced_search_clicked = pyqtSignal()
+    component_manager_clicked = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -103,7 +104,7 @@ class QuickAccessPanel(QWidget):
             ("📋", "Tablas", self.on_tables_manager_clicked, 3, 0),
             ("⭐", "Favoritos", self.on_favorites_clicked, 3, 1),
             ("📊", "Estadísticas", self.on_stats_clicked, 4, 0),
-            ("🌐", "Navegador", self.on_browser_clicked, 4, 1),
+            ("🧩", "Gestor de Componentes", self.on_component_manager_clicked, 4, 1),
             ("📂", "Filtros", self.on_category_filter_clicked, 5, 0),
             ("🗂️", "Dashboard", self.on_dashboard_clicked, 5, 1),
             ("📌", "Paneles", self.on_pinned_panels_clicked, 6, 0),
@@ -229,6 +230,11 @@ class QuickAccessPanel(QWidget):
     def on_advanced_search_clicked(self):
         """Handle advanced search button click"""
         self.advanced_search_clicked.emit()
+        self.hide()
+
+    def on_component_manager_clicked(self):
+        """Handle component manager button click"""
+        self.component_manager_clicked.emit()
         self.hide()
 
     def position_near_button(self, button_widget):
