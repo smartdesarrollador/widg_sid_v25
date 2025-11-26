@@ -172,10 +172,28 @@ class BookmarksPanel(QWidget):
                 border: 1px solid #0f3460;
                 background-color: #1a1a2e;
             }
+            QScrollBar:vertical {
+                background-color: #1a1a2e;
+                width: 12px;
+                border: none;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #00d4ff;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #00ff00;
+            }
         """)
 
         # Contenedor de marcadores
         self.bookmarks_container = QWidget()
+        self.bookmarks_container.setStyleSheet("""
+            QWidget {
+                background-color: #1a1a2e;
+            }
+        """)
         self.bookmarks_layout = QVBoxLayout(self.bookmarks_container)
         self.bookmarks_layout.setSpacing(5)
         self.bookmarks_layout.setContentsMargins(5, 5, 5, 5)
