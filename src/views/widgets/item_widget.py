@@ -214,18 +214,18 @@ class ItemButton(QFrame):
         # Spacer to push action buttons to the right
         main_layout.addStretch()
 
-        # ==== ACTION BUTTONS (compact 20x20px) ====
+        # ==== ACTION BUTTONS (compact 28x28px) ====
         if self.item.type == ItemType.CODE:
             # Execute command button (only for CODE items)
             self.execute_button = QPushButton("⚡")
-            self.execute_button.setFixedSize(20, 20)
+            self.execute_button.setFixedSize(28, 28)
             self.execute_button.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {PanelStyles.ACCENT_WARNING};
                     color: #000000;
                     border: none;
-                    border-radius: 2px;
-                    font-size: 10pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
                     padding: 0px;
                 }}
                 QPushButton:hover {{
@@ -244,14 +244,15 @@ class ItemButton(QFrame):
         elif self.item.type == 'WEB_STATIC' or self.item.type == ItemType.WEB_STATIC:
             # Render button (only for WEB_STATIC items) - FIRST FOR VISIBILITY
             self.render_button = QPushButton("📱")  # Cambiado de 🌐 a 📱 para diferenciarlo de URL
-            self.render_button.setFixedSize(35, 35)
+            self.render_button.setFixedSize(28, 28)
             self.render_button.setStyleSheet("""
                 QPushButton {
                     background-color: #4CAF50;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
                 QPushButton:hover {
                     background-color: #45a049;
@@ -268,18 +269,19 @@ class ItemButton(QFrame):
         elif self.item.type == ItemType.URL:
             # URL action buttons - two buttons layout
             url_buttons_layout = QHBoxLayout()
-            url_buttons_layout.setSpacing(5)
+            url_buttons_layout.setSpacing(4)
 
             # Open in embedded browser button
             self.open_url_button = QPushButton("🌐")
-            self.open_url_button.setFixedSize(35, 35)
+            self.open_url_button.setFixedSize(28, 28)
             self.open_url_button.setStyleSheet("""
                 QPushButton {
                     background-color: #007acc;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
                 QPushButton:hover {
                     background-color: #005a9e;
@@ -295,14 +297,15 @@ class ItemButton(QFrame):
 
             # Open in system browser button (NEW)
             self.open_external_button = QPushButton("🔗")
-            self.open_external_button.setFixedSize(35, 35)
+            self.open_external_button.setFixedSize(28, 28)
             self.open_external_button.setStyleSheet("""
                 QPushButton {
                     background-color: #0078d4;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
                 QPushButton:hover {
                     background-color: #106ebe;
@@ -321,18 +324,19 @@ class ItemButton(QFrame):
         elif self.item.type == ItemType.PATH:
             # PATH action buttons
             path_buttons_layout = QHBoxLayout()
-            path_buttons_layout.setSpacing(5)
+            path_buttons_layout.setSpacing(4)
 
             # Open in explorer button
             self.open_explorer_button = QPushButton("📁")
-            self.open_explorer_button.setFixedSize(35, 35)
+            self.open_explorer_button.setFixedSize(28, 28)
             self.open_explorer_button.setStyleSheet("""
                 QPushButton {
                     background-color: #2d7d2d;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
                 QPushButton:hover {
                     background-color: #236123;
@@ -351,14 +355,15 @@ class ItemButton(QFrame):
             path = self._resolve_path(self.item.content)
             if path.exists() and path.is_file():
                 self.open_file_button = QPushButton("📝")
-                self.open_file_button.setFixedSize(35, 35)
+                self.open_file_button.setFixedSize(28, 28)
                 self.open_file_button.setStyleSheet("""
                     QPushButton {
                         background-color: #cc7a00;
                         color: #ffffff;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                     QPushButton:hover {
                         background-color: #9e5e00;
@@ -379,15 +384,16 @@ class ItemButton(QFrame):
         # View table button (for table items)
         if hasattr(self.item, 'is_table') and self.item.is_table:
             self.view_table_btn = QPushButton("🗂️")
-            self.view_table_btn.setFixedSize(35, 35)
+            self.view_table_btn.setFixedSize(28, 28)
             self.view_table_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.view_table_btn.setStyleSheet("""
                 QPushButton {
                     background-color: #007acc;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 14pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
                 QPushButton:hover {
                     background-color: #005a9e;
@@ -404,14 +410,15 @@ class ItemButton(QFrame):
         # Reveal button for sensitive items
         if hasattr(self.item, 'is_sensitive') and self.item.is_sensitive:
             self.reveal_button = QPushButton("👁")
-            self.reveal_button.setFixedSize(35, 35)
+            self.reveal_button.setFixedSize(28, 28)
             self.reveal_button.setStyleSheet("""
                 QPushButton {
                     background-color: #cc0000;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
                 QPushButton:hover {
                     background-color: #9e0000;
@@ -427,13 +434,14 @@ class ItemButton(QFrame):
 
         # Info button (show details) - ALWAYS LAST
         self.info_btn = QPushButton("ℹ️")
-        self.info_btn.setFixedSize(30, 30)
+        self.info_btn.setFixedSize(28, 28)
         self.info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.info_btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
                 border: none;
-                font-size: 14pt;
+                font-size: 12pt;
+                padding: 0px;
             }
             QPushButton:hover {
                 background-color: #3e3e42;
@@ -553,8 +561,9 @@ class ItemButton(QFrame):
                         background-color: #00ff00;
                         color: #ffffff;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                 """)
                 QTimer.singleShot(300, lambda: self.open_url_button.setStyleSheet(original_style))
@@ -596,8 +605,9 @@ class ItemButton(QFrame):
                         background-color: #00ff00;
                         color: #ffffff;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                 """)
                 QTimer.singleShot(300, lambda: self.open_external_button.setStyleSheet(original_style))
@@ -661,8 +671,9 @@ class ItemButton(QFrame):
                         background-color: #00ff00;
                         color: #ffffff;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                 """)
                 QTimer.singleShot(300, lambda: self.open_explorer_button.setStyleSheet(original_style))
@@ -705,8 +716,9 @@ class ItemButton(QFrame):
                         background-color: #00ff00;
                         color: #ffffff;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                 """)
                 QTimer.singleShot(300, lambda: self.open_file_button.setStyleSheet(original_style))
@@ -1091,8 +1103,9 @@ class ItemButton(QFrame):
                     background-color: #ffff00;
                     color: #000000;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
             """)
             self.execute_button.setText("⏳")
@@ -1151,8 +1164,9 @@ class ItemButton(QFrame):
                         background-color: #00ff00;
                         color: #000000;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                 """)
             else:
@@ -1162,8 +1176,9 @@ class ItemButton(QFrame):
                         background-color: #ff0000;
                         color: #ffffff;
                         border: none;
-                        border-radius: 4px;
-                        font-size: 16pt;
+                        border-radius: 3px;
+                        font-size: 12pt;
+                        padding: 0px;
                     }
                 """)
                 error_msg = stderr if stderr else "Error desconocido"
@@ -1192,8 +1207,9 @@ class ItemButton(QFrame):
                     background-color: #ff0000;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
             """)
             QTimer.singleShot(1000, lambda: self.execute_button.setStyleSheet(original_style))
@@ -1219,8 +1235,9 @@ class ItemButton(QFrame):
                     background-color: #ff0000;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
             """)
             QTimer.singleShot(1000, lambda: self.execute_button.setStyleSheet(original_style))
@@ -1257,8 +1274,9 @@ class ItemButton(QFrame):
                     background-color: #00d4ff;
                     color: #000000;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
             """)
 
@@ -1281,8 +1299,9 @@ class ItemButton(QFrame):
                     background-color: #f44336;
                     color: #ffffff;
                     border: none;
-                    border-radius: 4px;
-                    font-size: 16pt;
+                    border-radius: 3px;
+                    font-size: 12pt;
+                    padding: 0px;
                 }
             """)
             QTimer.singleShot(1000, lambda: self.render_button.setStyleSheet(original_style))
