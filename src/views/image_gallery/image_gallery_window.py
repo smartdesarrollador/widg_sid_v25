@@ -119,6 +119,20 @@ class ImageGalleryWindow(QDialog):
         self.settings_btn.setToolTip("Configuración de galería")
         self.settings_btn.clicked.connect(self._show_settings)
 
+        # Botón minimizar
+        self.minimize_btn = QPushButton("🗕")
+        self.minimize_btn.setObjectName("iconButton")
+        self.minimize_btn.setFixedSize(40, 40)
+        self.minimize_btn.setToolTip("Minimizar ventana")
+        self.minimize_btn.clicked.connect(self.showMinimized)
+
+        # Botón maximizar/restaurar
+        self.maximize_btn = QPushButton("🗖")
+        self.maximize_btn.setObjectName("iconButton")
+        self.maximize_btn.setFixedSize(40, 40)
+        self.maximize_btn.setToolTip("Maximizar ventana")
+        self.maximize_btn.clicked.connect(self._toggle_maximize)
+
         # Botón cerrar
         self.close_btn = QPushButton("✕")
         self.close_btn.setObjectName("closeButton")
@@ -127,6 +141,8 @@ class ImageGalleryWindow(QDialog):
         self.close_btn.clicked.connect(self.close)
 
         layout.addWidget(self.settings_btn)
+        layout.addWidget(self.minimize_btn)
+        layout.addWidget(self.maximize_btn)
         layout.addWidget(self.close_btn)
 
         return header
@@ -381,6 +397,19 @@ class ImageGalleryWindow(QDialog):
             "Configuración",
             "Panel de configuración de galería\nSe implementará en FASE 6"
         )
+
+    def _toggle_maximize(self):
+        """Alternar entre maximizar y restaurar ventana"""
+        if self.isMaximized():
+            # Está maximizada, restaurar
+            self.showNormal()
+            self.maximize_btn.setText("🗖")
+            self.maximize_btn.setToolTip("Maximizar ventana")
+        else:
+            # No está maximizada, maximizar
+            self.showMaximized()
+            self.maximize_btn.setText("🗗")
+            self.maximize_btn.setToolTip("Restaurar ventana")
 
     def _on_card_clicked(self, item_data: dict):
         """
