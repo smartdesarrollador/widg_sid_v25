@@ -636,33 +636,47 @@ class DBManager:
     def get_categories(self, include_inactive: bool = False) -> List[Dict]:
         """
         Get all categories ordered by order_index
+        Tags are loaded from the many-to-many relationship
 
         Args:
             include_inactive: Include inactive categories
 
         Returns:
-            List[Dict]: List of category dictionaries
+            List[Dict]: List of category dictionaries with 'tags' field as list
         """
         query = """
             SELECT * FROM categories
             WHERE is_active = 1 OR ? = 1
             ORDER BY order_index
         """
-        return self.execute_query(query, (include_inactive,))
+        categories = self.execute_query(query, (include_inactive,))
+
+        # Load tags for each category from many-to-many relationship
+        for category in categories:
+            category['tags'] = self.get_category_tags(category['id'])
+
+        return categories
 
     def get_category(self, category_id: int) -> Optional[Dict]:
         """
         Get category by ID
+        Tags are loaded from the many-to-many relationship
 
         Args:
             category_id: Category ID
 
         Returns:
-            Optional[Dict]: Category dictionary or None
+            Optional[Dict]: Category dictionary with 'tags' field or None
         """
         query = "SELECT * FROM categories WHERE id = ?"
         result = self.execute_query(query, (category_id,))
-        return result[0] if result else None
+
+        if result:
+            category = result[0]
+            category['tags'] = self.get_category_tags(category_id)
+            return category
+
+        return None
 
     def add_category(self, name: str, icon: str = None,
                      is_predefined: bool = False, order_index: int = None,
@@ -687,15 +701,18 @@ class DBManager:
             )
             order_index = (max_order[0]['max_order'] or 0) + 1
 
-        # Convert tags to JSON
-        tags_json = json.dumps(tags) if tags else None
-
+        # Insert category WITHOUT tags column (using new many-to-many structure)
         query = """
-            INSERT INTO categories (name, icon, order_index, is_predefined, tags, updated_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO categories (name, icon, order_index, is_predefined, updated_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         """
-        category_id = self.execute_update(query, (name, icon, order_index, is_predefined, tags_json))
-        logger.info(f"Category added: {name} (ID: {category_id}, order_index: {order_index}, tags: {tags})")
+        category_id = self.execute_update(query, (name, icon, order_index, is_predefined))
+
+        # Assign tags if provided (using many-to-many relationship)
+        if tags:
+            self.set_category_tags(category_id, tags)
+
+        logger.info(f"Category added: {name} (ID: {category_id}, order_index: {order_index}, tags: {len(tags) if tags else 0})")
         return category_id
 
     def update_category(self, category_id: int, name: str = None,
@@ -711,7 +728,7 @@ class DBManager:
             icon: New icon (optional)
             order_index: New order (optional)
             is_active: New active status (optional)
-            tags: List of tags (optional)
+            tags: List of tags (optional) - replaces all existing tags
             color: Color hex code (optional)
         """
         updates = []
@@ -729,9 +746,6 @@ class DBManager:
         if is_active is not None:
             updates.append("is_active = ?")
             params.append(is_active)
-        if tags is not None:
-            updates.append("tags = ?")
-            params.append(json.dumps(tags))
         if color is not None:
             updates.append("color = ?")
             params.append(color)
@@ -741,7 +755,12 @@ class DBManager:
             params.append(category_id)
             query = f"UPDATE categories SET {', '.join(updates)} WHERE id = ?"
             self.execute_update(query, tuple(params))
-            logger.info(f"Category updated: ID {category_id}")
+
+        # Update tags separately (using many-to-many relationship)
+        if tags is not None:
+            self.set_category_tags(category_id, tags)
+
+        logger.info(f"Category updated: ID {category_id}")
 
     def delete_category(self, category_id: int) -> None:
         """
@@ -841,6 +860,171 @@ class DBManager:
         query = "UPDATE categories SET order_index = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
         self.execute_many(query, updates)
         logger.info(f"Categories reordered: {len(category_ids)} items")
+
+    # ========== CATEGORY TAGS (Many-to-Many) ==========
+
+    def get_all_category_tags(self) -> List[Dict[str, Any]]:
+        """
+        Get all available category tags
+
+        Returns:
+            List[Dict]: List of tag dictionaries with {id, name, created_at, updated_at}
+        """
+        query = """
+            SELECT id, name, created_at, updated_at
+            FROM category_tags
+            ORDER BY name ASC
+        """
+        return self.execute_query(query)
+
+    def get_or_create_category_tag(self, tag_name: str) -> int:
+        """
+        Get tag ID by name, creating it if it doesn't exist
+        Tag names are normalized to lowercase to avoid duplicates
+
+        Args:
+            tag_name: Tag name (will be converted to lowercase)
+
+        Returns:
+            int: Tag ID
+
+        Raises:
+            ValueError: If tag_name is empty
+        """
+        tag_name = tag_name.strip().lower()
+
+        if not tag_name:
+            raise ValueError("Tag name cannot be empty")
+
+        # Try to get existing tag
+        query = "SELECT id FROM category_tags WHERE name = ?"
+        result = self.execute_query(query, (tag_name,))
+
+        if result:
+            return result[0]['id']
+
+        # Create new tag
+        query = "INSERT INTO category_tags (name) VALUES (?)"
+        tag_id = self.execute_update(query, (tag_name,))
+        logger.debug(f"Category tag created: '{tag_name}' (ID: {tag_id})")
+
+        return tag_id
+
+    def delete_unused_category_tags(self) -> int:
+        """
+        Delete tags that are not associated with any category
+
+        Returns:
+            int: Number of tags deleted
+        """
+        query = """
+            DELETE FROM category_tags
+            WHERE id NOT IN (
+                SELECT DISTINCT tag_id FROM category_tags_category
+            )
+        """
+        rows_affected = self.execute_update(query)
+        logger.info(f"Deleted {rows_affected} unused category tags")
+        return rows_affected
+
+    def set_category_tags(self, category_id: int, tags: List[str]) -> None:
+        """
+        Set tags for a category (replaces all existing tags)
+
+        Args:
+            category_id: Category ID
+            tags: List of tag names
+        """
+        with self.transaction() as conn:
+            cursor = conn.cursor()
+
+            # Delete all existing tag relationships for this category
+            cursor.execute(
+                "DELETE FROM category_tags_category WHERE category_id = ?",
+                (category_id,)
+            )
+
+            # Create new tag relationships
+            for tag_name in tags:
+                if not tag_name.strip():
+                    continue
+
+                # Get or create tag
+                tag_id = self.get_or_create_category_tag(tag_name)
+
+                # Create relationship
+                cursor.execute(
+                    "INSERT OR IGNORE INTO category_tags_category (category_id, tag_id) VALUES (?, ?)",
+                    (category_id, tag_id)
+                )
+
+        logger.debug(f"Category {category_id} tags set: {tags}")
+
+    def add_category_tag(self, category_id: int, tag_name: str) -> None:
+        """
+        Add a single tag to a category (without removing existing tags)
+
+        Args:
+            category_id: Category ID
+            tag_name: Tag name to add
+        """
+        tag_id = self.get_or_create_category_tag(tag_name)
+
+        query = "INSERT OR IGNORE INTO category_tags_category (category_id, tag_id) VALUES (?, ?)"
+        self.execute_update(query, (category_id, tag_id))
+        logger.debug(f"Tag '{tag_name}' added to category {category_id}")
+
+    def remove_category_tag(self, category_id: int, tag_name: str) -> bool:
+        """
+        Remove a tag from a category
+
+        Args:
+            category_id: Category ID
+            tag_name: Tag name to remove
+
+        Returns:
+            bool: True if tag was removed, False if it wasn't assigned
+        """
+        tag_name = tag_name.strip().lower()
+
+        # Get tag ID
+        query = "SELECT id FROM category_tags WHERE name = ?"
+        result = self.execute_query(query, (tag_name,))
+
+        if not result:
+            return False
+
+        tag_id = result[0]['id']
+
+        # Delete relationship
+        query = "DELETE FROM category_tags_category WHERE category_id = ? AND tag_id = ?"
+        rows_affected = self.execute_update(query, (category_id, tag_id))
+
+        if rows_affected > 0:
+            logger.debug(f"Tag '{tag_name}' removed from category {category_id}")
+            return True
+
+        return False
+
+    def get_category_tags(self, category_id: int) -> List[str]:
+        """
+        Get all tags for a category
+
+        Args:
+            category_id: Category ID
+
+        Returns:
+            List[str]: List of tag names
+        """
+        query = """
+            SELECT ct.name
+            FROM category_tags ct
+            INNER JOIN category_tags_category ctc ON ct.id = ctc.tag_id
+            WHERE ctc.category_id = ?
+            ORDER BY ct.name ASC
+        """
+        result = self.execute_query(query, (category_id,))
+        return [row['name'] for row in result]
 
     # ========== ITEMS ==========
 
