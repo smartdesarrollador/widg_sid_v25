@@ -11,9 +11,10 @@ en un grid responsive. Incluye:
 """
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                             QFrame, QPushButton, QGraphicsDropShadowEffect)
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QSize
-from PyQt6.QtGui import QCursor, QColor
+                             QFrame, QPushButton, QGraphicsDropShadowEffect,
+                             QGraphicsOpacityEffect)
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QSize, QTimer, QRect
+from PyQt6.QtGui import QCursor, QColor, QPainter, QPen, QFont
 import logging
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,10 @@ class ProjectCardWidget(QWidget):
         self.item_data = item_data
         self.item_type = item_type
         self.is_hovered = False
+        self.show_copied_indicator = False  # Para mostrar checkmark al copiar
+
+        # Guardar el nombre original completo para copiar
+        self.original_name = item_data.get('name', item_data.get('content', ''))
 
         # Configurar tamaño fijo de la card
         self.setFixedSize(280, 160)
@@ -71,6 +76,11 @@ class ProjectCardWidget(QWidget):
 
         self.init_ui()
         self.setup_shadow_effect()
+
+        # Timer para ocultar el indicador de copiado
+        self.copied_timer = QTimer()
+        self.copied_timer.setSingleShot(True)
+        self.copied_timer.timeout.connect(self.hide_copied_indicator)
 
     def init_ui(self):
         """Inicializa la interfaz de la card"""
@@ -248,9 +258,96 @@ class ProjectCardWidget(QWidget):
     def mousePressEvent(self, event):
         """Al hacer clic en la card"""
         if event.button() == Qt.MouseButton.LeftButton:
-            # Emitir señal con contenido
-            content = self.item_data.get('name', self.item_data.get('content', ''))
-            self.clicked.emit(content)
-            logger.info(f"Card clicked: {content[:50]}")
+            # Emitir señal con el nombre original (sin truncar, sin icono)
+            self.clicked.emit(self.original_name)
+            logger.info(f"Card clicked - Copying to clipboard: {self.original_name}")
+
+            # Mostrar indicador de copiado
+            self.show_copy_feedback()
 
         super().mousePressEvent(event)
+
+    def show_copy_feedback(self):
+        """Muestra feedback visual de que se copió al portapapeles"""
+        # Activar indicador
+        self.show_copied_indicator = True
+        self.update()  # Forzar repaint
+
+        # Cambiar color del borde temporalmente
+        border_color = self.TYPE_COLORS.get(self.item_type, '#555555')
+        self.card_frame.setStyleSheet(f"""
+            QFrame#cardFrame {{
+                background-color: #2d2d2d;
+                border: 3px solid #00ff88;
+                border-radius: 8px;
+                padding: 12px;
+            }}
+        """)
+
+        # Iniciar animación de sombra
+        self.shadow.setBlurRadius(25)
+        self.shadow.setYOffset(8)
+        self.shadow.setColor(QColor(0, 255, 136, 150))
+
+        # Ocultar indicador después de 1 segundo
+        self.copied_timer.start(1000)
+
+    def hide_copied_indicator(self):
+        """Oculta el indicador de copiado"""
+        self.show_copied_indicator = False
+        self.update()
+
+        # Restaurar estilo original
+        border_color = self.TYPE_COLORS.get(self.item_type, '#555555')
+        self.card_frame.setStyleSheet(f"""
+            QFrame#cardFrame {{
+                background-color: #2d2d2d;
+                border: 2px solid {border_color};
+                border-radius: 8px;
+                padding: 12px;
+            }}
+            QFrame#cardFrame:hover {{
+                background-color: #353535;
+                border-color: #ffffff;
+            }}
+        """)
+
+        # Restaurar sombra
+        self.shadow.setBlurRadius(10)
+        self.shadow.setYOffset(2)
+        self.shadow.setColor(QColor(0, 0, 0, 60))
+
+    def paintEvent(self, event):
+        """Dibuja el indicador de copiado si está activo"""
+        super().paintEvent(event)
+
+        if self.show_copied_indicator:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            # Dibujar círculo de fondo
+            center_x = self.width() - 30
+            center_y = 30
+            radius = 20
+
+            # Círculo verde con borde
+            painter.setBrush(QColor(0, 255, 136))
+            painter.setPen(QPen(QColor(0, 200, 100), 2))
+            painter.drawEllipse(center_x - radius, center_y - radius, radius * 2, radius * 2)
+
+            # Dibujar checkmark
+            painter.setPen(QPen(QColor(0, 0, 0), 3, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+
+            # Línea 1 del check (parte corta)
+            painter.drawLine(center_x - 8, center_y, center_x - 3, center_y + 6)
+
+            # Línea 2 del check (parte larga)
+            painter.drawLine(center_x - 3, center_y + 6, center_x + 8, center_y - 6)
+
+            # Texto "Copiado!"
+            painter.setPen(QColor(0, 255, 136))
+            font = QFont()
+            font.setPointSize(8)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(center_x - 30, center_y + 35, "Copiado!")
